@@ -1,33 +1,135 @@
 package info
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/windyzoe/study-house/service"
 )
 
 func Start() {
+	houseCh := make(chan int)
+	go getHousePageCount(houseCh)
+	houseSpider(houseCh, "杨浦")
+
+	buildingCh := make(chan int)
+	go getBuildingPageCount(buildingCh)
+	buildingSpider(buildingCh)
+}
+
+func getHousePageCount(ch chan int) {
 	c := colly.NewCollector(
-		colly.AllowedDomains("www.baidu.com"),
+		colly.AllowedDomains("sh.lianjia.com"),
 	)
-
-	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		fmt.Printf("Link found: %q -> %s\n", e.Text, link)
-		c.Visit(e.Request.AbsoluteURL(link))
-	})
-
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
-	})
-
-	c.OnResponse(func(r *colly.Response) {
-		fmt.Printf("Response %s: %d bytes\n", r.Request.URL, len(r.Body))
+	c.OnHTML(".house-lst-page-box", func(e *colly.HTMLElement) {
+		s := e.Attr("page-data")
+		var mapResult map[string]int
+		if err := json.Unmarshal([]byte(s), &mapResult); err != nil {
+			fmt.Printf("Error  %v\n", err)
+		}
+		fmt.Println(`开始发送`)
+		fmt.Println(mapResult[`totalPage`])
+		ch <- mapResult[`totalPage`]
+		fmt.Println(`发送完毕`)
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
 		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
 	})
 
-	c.Visit("http://www.baidu.com/")
+	c.Visit("https://sh.lianjia.com/ershoufang/yangpu/")
+}
+
+func houseSpider(ch chan int, district string) {
+	pageCount := <-ch
+	listCollector := colly.NewCollector(
+		colly.AllowedDomains("sh.lianjia.com"),
+	)
+	listCollector.OnHTML(".info", func(e *colly.HTMLElement) {
+		var house service.House
+		houseInfos := strings.Split(e.ChildText(".houseInfo"), " | ")
+		positions := strings.Split(e.ChildText(".positionInfo a"), " ")
+		house.Name = e.ChildText(".title a")
+		house.Building = positions[0]
+		house.Region = positions[1]
+		house.District = district
+		house.Area, _ = strconv.ParseFloat(strings.Split(houseInfos[1], "平")[0], 10)
+		house.Time, _ = strconv.ParseInt(strings.Split(houseInfos[5], "年")[0], 10, 0)
+		floorCountMatchs := regexp.MustCompile(`\d+`).FindAllString(houseInfos[4], -1)
+		house.FloorCount, _ = strconv.ParseInt(floorCountMatchs[0], 10, 0)
+		unitPriceMatchs := regexp.MustCompile(`\d+`).FindAllString(e.ChildText(".unitPrice span"), -1)
+		house.UnitPrice, _ = strconv.ParseInt(unitPriceMatchs[0]+unitPriceMatchs[1], 10, 0)
+		house.TotalPrice, _ = strconv.ParseInt(e.ChildText(".totalPrice span"), 10, 0)
+		log.Printf("%#v\n", house)
+		service.UpdateHouse(house)
+	})
+	listCollector.OnError(func(r *colly.Response, err error) {
+		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
+	})
+	for i := 1; i <= pageCount; i++ {
+		listCollector.Visit("https://sh.lianjia.com/ershoufang/yangpu/pg" + strconv.FormatInt(int64(i), 10) + "/")
+	}
+}
+
+func getBuildingPageCount(ch chan int) {
+	c := colly.NewCollector(
+		colly.AllowedDomains("sh.lianjia.com"),
+	)
+	c.OnHTML(".house-lst-page-box", func(e *colly.HTMLElement) {
+		s := e.Attr("page-data")
+		var mapResult map[string]int
+		if err := json.Unmarshal([]byte(s), &mapResult); err != nil {
+			fmt.Printf("Error  %v\n", err)
+		}
+		fmt.Println(`开始发送`)
+		fmt.Println(mapResult[`totalPage`])
+		ch <- mapResult[`totalPage`]
+		fmt.Println(`发送完毕`)
+	})
+
+	c.OnError(func(r *colly.Response, err error) {
+		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
+	})
+
+	c.Visit("https://sh.lianjia.com/xiaoqu/yangpu/")
+}
+
+func buildingSpider(ch chan int) {
+	pageCount := <-ch
+	listCollector := colly.NewCollector(
+		colly.AllowedDomains("sh.lianjia.com"),
+	)
+	buildingCollector := colly.NewCollector(
+		colly.AllowedDomains("sh.lianjia.com"),
+	)
+	buildingCollector.OnHTML("body", func(e *colly.HTMLElement) {
+		var building service.Building
+		aliasInfos := strings.Split(e.ChildText(".detailDesc"), ")")
+		buidingInfos := e.ChildTexts(".xiaoquDetailbreadCrumbs .fl a")
+		infos := e.ChildTexts(".xiaoquInfoContent")
+		building.Name = e.ChildText(".detailTitle")
+		building.Alias = aliasInfos[1]
+		building.Region = strings.Split(buidingInfos[3], "小区")[0]
+		building.District = strings.Split(buidingInfos[2], "小区")[0]
+		building.Time, _ = strconv.ParseInt(strings.Split(infos[0], "年")[0], 10, 0)
+		building.BuildingCount, _ = strconv.ParseInt(strings.Split(infos[5], "栋")[0], 10, 0)
+		building.HouseCount, _ = strconv.ParseInt(strings.Split(infos[6], "户")[0], 10, 0)
+		log.Printf("%#v\n", building)
+		service.UpdateBuilding(building)
+	})
+	listCollector.OnHTML(".title a", func(e *colly.HTMLElement) {
+		href := e.Attr("href")
+		buildingCollector.Visit(href)
+	})
+	listCollector.OnError(func(r *colly.Response, err error) {
+		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
+	})
+	for i := 1; i <= pageCount; i++ {
+		listCollector.Visit("https://sh.lianjia.com/xiaoqu/yangpu/pg" + strconv.FormatInt(int64(i), 10) + "/")
+	}
 }

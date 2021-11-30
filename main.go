@@ -1,22 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
-	"github.com/windyzoe/study-house/cron"
 	"github.com/windyzoe/study-house/info"
-	"github.com/windyzoe/study-house/rest"
 	"github.com/windyzoe/study-house/service"
 )
 
 func main() {
-	cron.Start()
-	log.SetPrefix("greetings: ")
-	log.SetFlags(0)
-	fmt.Println("123123")
+	// cron.Start()
+	log.SetFlags(log.Llongfile | log.Ltime | log.Ldate)
 	service.Start()
+	defer service.DB.Close()
 	info.Start()
-	rest.Start()
-
+	// rest.Start()
 }
