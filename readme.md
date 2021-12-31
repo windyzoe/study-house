@@ -23,16 +23,16 @@
 
 ## 小区 building
 
-| 字段          | 描述     |
-| ------------- | -------- |
-| Name          | 名称     |
-| Region        | 板块     |
-| District      | 市区     |
-| Time          | 修建时间 |
-| Decription    | 备注     |
-| BuildingCount | 楼数     |
-| HouseCount    | 房屋总数 |
-| Alias         | 别名     |
+| 字段          | 描述                      |
+| ------------- | ------------------------- | --- |
+| Name          | 名称                      |
+| Region        | 板块                      |
+| District      | 市区                      |
+| Time          | 修建时间                  |
+| Decription    | 备注                      |
+| BuildingCount | 楼数                      |
+| HouseCount    | 房屋总数                  |
+| Alias         | 别名,小区可能有不同的街号 |     |
 
 ## 学校 school
 
@@ -41,17 +41,18 @@
 | Name     | 名称     |
 | Region   | 板块     |
 | District | 市区     |
-| Type     | 小初中   |
+| Size     | 小初中   |
 | Awesome  | 牛逼程度 |
 
 ## 学校-小区关联表 rel_school_building
 
-| 字段     | 描述         |
-| -------- | ------------ |
-| Id       | id           |
-| Building | 小区         |
-| School   | 学校         |
-| Year     | 几几年的规定 |
+| 字段       | 描述         |
+| ---------- | ------------ |
+| Id         | id           |
+| Building   | 小区         |
+| School     | 学校         |
+| Year       | 几几年的规定 |
+| Decription | 备注         |
 
 # 数据清洗
 

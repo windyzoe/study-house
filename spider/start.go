@@ -1,25 +1,30 @@
-package info
+package spider
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
-	"github.com/windyzoe/study-house/service"
+	buildingM "github.com/windyzoe/study-house/modules/building"
+	houseM "github.com/windyzoe/study-house/modules/house"
 )
 
+// 爬虫
 func Start() {
-	houseCh := make(chan int)
-	go getHousePageCount(houseCh)
-	houseSpider(houseCh, "杨浦")
+	// houseCh := make(chan int)
+	// go getHousePageCount(houseCh)
+	// houseSpider(houseCh, "杨浦")
 
-	buildingCh := make(chan int)
-	go getBuildingPageCount(buildingCh)
-	buildingSpider(buildingCh)
+	// buildingCh := make(chan int)
+	// go getBuildingPageCount(buildingCh)
+	// buildingSpider(buildingCh)
+
+	// 映射脚本
+	// getSchool()
+	// service.GetBuildingList()
 }
 
 func getHousePageCount(ch chan int) {
@@ -30,16 +35,16 @@ func getHousePageCount(ch chan int) {
 		s := e.Attr("page-data")
 		var mapResult map[string]int
 		if err := json.Unmarshal([]byte(s), &mapResult); err != nil {
-			fmt.Printf("Error  %v\n", err)
+			log.Printf("Error  %v\n", err)
 		}
-		fmt.Println(`开始发送`)
-		fmt.Println(mapResult[`totalPage`])
+		log.Println(`开始发送`)
+		log.Println(mapResult[`totalPage`])
 		ch <- mapResult[`totalPage`]
-		fmt.Println(`发送完毕`)
+		log.Println(`发送完毕`)
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
+		log.Printf("Error %s: %v\n", r.Request.URL, err)
 	})
 
 	c.Visit("https://sh.lianjia.com/ershoufang/yangpu/")
@@ -51,7 +56,7 @@ func houseSpider(ch chan int, district string) {
 		colly.AllowedDomains("sh.lianjia.com"),
 	)
 	listCollector.OnHTML(".info", func(e *colly.HTMLElement) {
-		var house service.House
+		var house houseM.House
 		houseInfos := strings.Split(e.ChildText(".houseInfo"), " | ")
 		positions := strings.Split(e.ChildText(".positionInfo a"), " ")
 		house.Name = e.ChildText(".title a")
@@ -66,10 +71,10 @@ func houseSpider(ch chan int, district string) {
 		house.UnitPrice, _ = strconv.ParseInt(unitPriceMatchs[0]+unitPriceMatchs[1], 10, 0)
 		house.TotalPrice, _ = strconv.ParseInt(e.ChildText(".totalPrice span"), 10, 0)
 		log.Printf("%#v\n", house)
-		service.UpdateHouse(house)
+		houseM.UpdateHouse(house)
 	})
 	listCollector.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
+		log.Printf("Error %s: %v\n", r.Request.URL, err)
 	})
 	for i := 1; i <= pageCount; i++ {
 		listCollector.Visit("https://sh.lianjia.com/ershoufang/yangpu/pg" + strconv.FormatInt(int64(i), 10) + "/")
@@ -84,16 +89,16 @@ func getBuildingPageCount(ch chan int) {
 		s := e.Attr("page-data")
 		var mapResult map[string]int
 		if err := json.Unmarshal([]byte(s), &mapResult); err != nil {
-			fmt.Printf("Error  %v\n", err)
+			log.Printf("Error  %v\n", err)
 		}
-		fmt.Println(`开始发送`)
-		fmt.Println(mapResult[`totalPage`])
+		log.Println(`开始发送`)
+		log.Println(mapResult[`totalPage`])
 		ch <- mapResult[`totalPage`]
-		fmt.Println(`发送完毕`)
+		log.Println(`发送完毕`)
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
+		log.Printf("Error %s: %v\n", r.Request.URL, err)
 	})
 
 	c.Visit("https://sh.lianjia.com/xiaoqu/yangpu/")
@@ -108,7 +113,7 @@ func buildingSpider(ch chan int) {
 		colly.AllowedDomains("sh.lianjia.com"),
 	)
 	buildingCollector.OnHTML("body", func(e *colly.HTMLElement) {
-		var building service.Building
+		var building buildingM.Building
 		aliasInfos := strings.Split(e.ChildText(".detailDesc"), ")")
 		buidingInfos := e.ChildTexts(".xiaoquDetailbreadCrumbs .fl a")
 		infos := e.ChildTexts(".xiaoquInfoContent")
@@ -120,14 +125,14 @@ func buildingSpider(ch chan int) {
 		building.BuildingCount, _ = strconv.ParseInt(strings.Split(infos[5], "栋")[0], 10, 0)
 		building.HouseCount, _ = strconv.ParseInt(strings.Split(infos[6], "户")[0], 10, 0)
 		log.Printf("%#v\n", building)
-		service.UpdateBuilding(building)
+		buildingM.UpdateBuilding(building)
 	})
 	listCollector.OnHTML(".title a", func(e *colly.HTMLElement) {
 		href := e.Attr("href")
 		buildingCollector.Visit(href)
 	})
 	listCollector.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
+		log.Printf("Error %s: %v\n", r.Request.URL, err)
 	})
 	for i := 1; i <= pageCount; i++ {
 		listCollector.Visit("https://sh.lianjia.com/xiaoqu/yangpu/pg" + strconv.FormatInt(int64(i), 10) + "/")
