@@ -1,0 +1,6 @@
+server:
+  port: 8765
+
+# sqllite的数据库地址
+db:
+  path: "./foo.db"

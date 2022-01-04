@@ -8,6 +8,7 @@ import (
 	"github.com/windyzoe/study-house/db"
 	"github.com/windyzoe/study-house/rest"
 	"github.com/windyzoe/study-house/spider"
+	"github.com/windyzoe/study-house/util"
 )
 
 func init() {
@@ -22,10 +23,10 @@ func init() {
 }
 
 func main() {
+	util.InitSetting()
 	// cron.Start()
 	db.Start()
 	defer db.DB.Close()
 	spider.Start()
 	rest.Start()
-
 }

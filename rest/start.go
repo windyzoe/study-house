@@ -6,6 +6,7 @@ import (
 	houseM "github.com/windyzoe/study-house/modules/house"
 	schoolM "github.com/windyzoe/study-house/modules/school"
 	userM "github.com/windyzoe/study-house/modules/user"
+	"github.com/windyzoe/study-house/util"
 )
 
 var Router *gin.Engine
@@ -19,7 +20,7 @@ func Start() {
 		})
 	})
 	setupRouter()
-	Router.Run(":8765") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	Router.Run(":" + util.Configs.Server.Port) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 
 func setupRouter() {

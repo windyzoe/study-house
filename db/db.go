@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/windyzoe/study-house/util"
 )
 
 var DB *sql.DB
@@ -21,7 +22,7 @@ func Start() {
 func initDB() {
 	log.Print("initDB--SUCCESS")
 	var err error
-	DB, err = sql.Open("sqlite3", "./foo.db")
+	DB, err = sql.Open("sqlite3", util.Configs.Db.Path)
 	if err != nil {
 		log.Println(err)
 	}
