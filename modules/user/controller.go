@@ -1,6 +1,7 @@
 package userM
 
 import (
+	"errors"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +34,8 @@ func Login(c *gin.Context) {
 		return
 	}
 	if user["Password"] != current.Password {
-		util.ErrorRes(c, 10017, err)
+		log.Println(user["Password"], current.Password)
+		util.ErrorRes(c, 10017, errors.New("password incorrect"))
 		return
 	}
 	item := GenerateToken()

@@ -145,6 +145,7 @@ func Query(mapper map[string]string, fromStr string) (list []map[string]interfac
 		}
 		list = append(list, item)
 	}
+	log.Println(list)
 	err = rows.Err()
 	if err != nil {
 		log.Println(err)
