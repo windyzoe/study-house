@@ -29,7 +29,7 @@ type Auth struct {
 var Configs = Config{}
 
 func InitConfig() {
-	file, err := ioutil.ReadFile("./config-" + *FLAG_ENV + ".yaml")
+	file, err := ioutil.ReadFile("./resource/config-" + *FLAG_ENV + ".yaml")
 	if err != nil {
 		log.Error().Err(err).Msg("fail to read file:")
 	}

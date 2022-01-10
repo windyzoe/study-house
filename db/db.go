@@ -34,7 +34,7 @@ func initDB() {
 
 func createDB() {
 	log.Print("createDB--SUCCES")
-	sql, err := ioutil.ReadFile("./create.sql")
+	sql, err := ioutil.ReadFile("./resource/create.sql")
 	if err != nil {
 		log.Error().Err(err)
 	}
