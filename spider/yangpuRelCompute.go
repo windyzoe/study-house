@@ -3,11 +3,12 @@ package spider
 // 杨浦的数据解析
 import (
 	"encoding/csv"
-	"log"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 
 	buildingM "github.com/windyzoe/study-house/modules/building"
 	schoolM "github.com/windyzoe/study-house/modules/school"
@@ -18,7 +19,7 @@ import (
 func getSchool() {
 	opencast, err := os.Open("./yangpu2021.csv")
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	defer opencast.Close()
 	//创建csv读取接口实例
@@ -26,7 +27,7 @@ func getSchool() {
 	//读取所有内容
 	ReadAll, err := ReadCsv.ReadAll()
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	length := len(ReadAll)
 
@@ -123,7 +124,7 @@ func checkIsHaveRel(addressAlias string, buildingLine string) bool {
 			}
 			inExcept := checkInExcept(lineExcept, addressAlias)
 			if inExcept {
-				// log.Println(addressAlias, buildingLine)
+				// log.Info().Msg(addressAlias, buildingLine)
 			}
 			return !inExcept
 		}
@@ -135,7 +136,7 @@ func checkIsHaveRel(addressAlias string, buildingLine string) bool {
 			}
 			inExcept := checkInExcept(lineExcept, addressAlias)
 			if inExcept {
-				// log.Println(addressAlias, buildingLine)
+				// log.Info().Msg(addressAlias, buildingLine)
 			}
 			return !inExcept
 		}
@@ -147,7 +148,7 @@ func checkIsHaveRel(addressAlias string, buildingLine string) bool {
 			}
 			inExcept := checkInExcept(lineExcept, addressAlias)
 			if inExcept {
-				// log.Println(addressAlias, buildingLine)
+				// log.Info().Msg(addressAlias, buildingLine)
 			}
 			return !inExcept
 		}
@@ -209,7 +210,7 @@ func afterCompute(addressAlias string, buildingLine string) bool {
 		return false
 	}
 	afterNumber, _ := strconv.ParseInt(afterNumberString[0], 10, 64)
-	// log.Println(addressNumber, afterNumber, addressAlias, buildingLine)
+	// log.Info().Msg(addressNumber, afterNumber, addressAlias, buildingLine)
 	if addressNumber >= afterNumber {
 		return true
 	}

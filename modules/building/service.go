@@ -2,7 +2,8 @@ package buildingM
 
 import (
 	"encoding/json"
-	"log"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/windyzoe/study-house/db"
 	"github.com/windyzoe/study-house/util"
@@ -33,11 +34,11 @@ func GetAllBuilding() []Building {
 	for _, v := range mapBuildings {
 		data, err := json.Marshal(v)
 		if err != nil {
-			log.Fatal(err)
+			log.Error().Err(err)
 		}
 		var building Building
 		if err := json.Unmarshal(data, &building); err != nil {
-			log.Fatal(err)
+			log.Error().Err(err)
 		}
 		buildings = append(buildings, building)
 	}

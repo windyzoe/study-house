@@ -2,18 +2,17 @@ package userM
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
+	"github.com/windyzoe/study-house/util"
 )
 
 var TOKEN_MAP = make(map[string]AuthItem)
-
-// 白名单
-var whiteList = []string{"/login"}
 
 type AuthItem struct {
 	Token     string
@@ -23,8 +22,8 @@ type AuthItem struct {
 // 判断接口鉴权的切面
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println(c.Request.RequestURI)
-		for _, v := range whiteList {
+		log.Info().Msg(c.Request.RequestURI)
+		for _, v := range util.Configs.Auth.Whitelist {
 			if v == c.Request.RequestURI {
 				c.Next()
 				return
@@ -73,7 +72,6 @@ func Auth() gin.HandlerFunc {
 
 func NewAuth(token string) AuthItem {
 	v := TOKEN_MAP[token]
-	log.Println("TOKEN_MAP--", TOKEN_MAP, v)
 	return v
 }
 

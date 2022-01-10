@@ -2,7 +2,8 @@ package userM
 
 import (
 	"errors"
-	"log"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/windyzoe/study-house/util"
@@ -29,12 +30,11 @@ func Login(c *gin.Context) {
 	}
 	user, err := GetUser(current.Name)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 		util.ErrorRes(c, 10016, err)
 		return
 	}
 	if user["Password"] != current.Password {
-		log.Println(user["Password"], current.Password)
 		util.ErrorRes(c, 10017, errors.New("password incorrect"))
 		return
 	}

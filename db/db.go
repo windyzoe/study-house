@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"strconv"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/rs/zerolog/log"
 	"github.com/windyzoe/study-house/util"
 )
 
@@ -20,15 +20,15 @@ func Start() {
 }
 
 func initDB() {
-	log.Print("initDB--SUCCESS")
+	log.Info().Msg("initDB--SUCCESS")
 	var err error
 	DB, err = sql.Open("sqlite3", util.Configs.Db.Path)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	err = DB.Ping()
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 }
 
@@ -36,7 +36,7 @@ func createDB() {
 	log.Print("createDB--SUCCES")
 	sql, err := ioutil.ReadFile("./create.sql")
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	sqlStmt := string(sql)
 	_, err = DB.Exec(sqlStmt)
@@ -51,7 +51,7 @@ func createDB() {
 func UpdateWithCommit(tableName string, rows []map[string]interface{}) {
 	transaction, err := DB.Begin()
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	if len(rows) == 0 {
 		return
@@ -76,11 +76,11 @@ func UpdateWithCommit(tableName string, rows []map[string]interface{}) {
 	// 准备
 	prepareInsert, err := transaction.Prepare(insertSql)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	prepareUpdate, err := transaction.Prepare(updateSql)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	defer prepareInsert.Close()
 	defer prepareUpdate.Close()
@@ -100,18 +100,18 @@ func UpdateWithCommit(tableName string, rows []map[string]interface{}) {
 		if idExsit && idOk && idInt != 0 {
 			values = append(values, id)
 			_, err = prepareUpdate.Exec(values...)
-			log.Println(values)
+			log.Info().Msgf("%s", values)
 		} else {
-			log.Println(values)
+			log.Info().Msgf("%s", values)
 			_, err = prepareInsert.Exec(values...)
 		}
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err)
 		}
 	}
 	err = transaction.Commit()
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 }
 
@@ -122,10 +122,10 @@ func UpdateWithCommit(tableName string, rows []map[string]interface{}) {
 func Query(mapper map[string]string, fromStr string) (list []map[string]interface{}) {
 	selectStr, mappingKeys := getSelectMapperKeys(mapper)
 	querySql := "select " + selectStr + " from " + fromStr
-	log.Println(querySql)
+	log.Info().Msg(querySql)
 	rows, err := DB.Query(querySql)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	defer rows.Close()
 	keyLength := len(mappingKeys)
@@ -137,7 +137,7 @@ func Query(mapper map[string]string, fromStr string) (list []map[string]interfac
 	for rows.Next() {
 		err = rows.Scan(cache...)
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err)
 		}
 		item := make(map[string]interface{})
 		for i, v := range cache {
@@ -145,10 +145,10 @@ func Query(mapper map[string]string, fromStr string) (list []map[string]interfac
 		}
 		list = append(list, item)
 	}
-	log.Println(list)
+	log.Info().Msgf("%s", list)
 	err = rows.Err()
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	return
 }
@@ -202,7 +202,7 @@ func QueryAll(tableName string, keys []string, id int64) []map[string]interface{
 	}
 	rows, err := DB.Query(querySql)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	defer rows.Close()
 	keyLength := len(keys)
@@ -215,7 +215,7 @@ func QueryAll(tableName string, keys []string, id int64) []map[string]interface{
 	for rows.Next() {
 		err = rows.Scan(cache...)
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err)
 		}
 		item := make(map[string]interface{})
 		for i, v := range cache {
@@ -225,7 +225,7 @@ func QueryAll(tableName string, keys []string, id int64) []map[string]interface{
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	return list
 }
@@ -245,7 +245,7 @@ func example() {
 	var err error
 	DB, err = sql.Open("sqlite3", "./foo.db")
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	sqlStmt := `
 	create table foo (id integer not null primary key, name text);
@@ -259,24 +259,24 @@ func example() {
 
 	tx, err := DB.Begin()
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	stmt, err := tx.Prepare("insert into foo(id, name) values(?, ?)")
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	defer stmt.Close()
 	for i := 0; i < 100; i++ {
 		_, err = stmt.Exec(i, fmt.Sprintf("こんにちわ世界%03d", i))
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err)
 		}
 	}
 	tx.Commit()
 
 	rows, err := DB.Query("select id, name from foo")
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -284,40 +284,40 @@ func example() {
 		var name string
 		err = rows.Scan(&id, &name)
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err)
 		}
 		fmt.Println(id, name)
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 
 	stmt, err = DB.Prepare("select name from foo where id = ?")
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	defer stmt.Close()
 	var name string
 	err = stmt.QueryRow("3").Scan(&name)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	fmt.Println(name)
 
 	_, err = DB.Exec("delete from foo")
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 
 	_, err = DB.Exec("insert into foo(id, name) values(1, 'foo'), (2, 'bar'), (3, 'baz')")
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 
 	rows, err = DB.Query("select id, name from foo")
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -325,12 +325,12 @@ func example() {
 		var name string
 		err = rows.Scan(&id, &name)
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err)
 		}
 		fmt.Println(id, name)
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 	}
 }

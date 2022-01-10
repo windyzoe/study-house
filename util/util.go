@@ -2,8 +2,9 @@ package util
 
 import (
 	"encoding/json"
-	"log"
 	"reflect"
+
+	"github.com/rs/zerolog/log"
 )
 
 func StructKeys(stru interface{}) []string {
@@ -19,11 +20,11 @@ func StructKeys(stru interface{}) []string {
 func StructToMap(stru interface{}) map[string]interface{} {
 	data, err := json.Marshal(stru)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err)
 	}
 	var mapResult map[string]interface{}
 	if err := json.Unmarshal(data, &mapResult); err != nil {
-		log.Fatal(err)
+		log.Error().Err(err)
 	}
 	return mapResult
 }

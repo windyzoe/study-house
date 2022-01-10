@@ -2,10 +2,11 @@ package spider
 
 import (
 	"encoding/json"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/gocolly/colly/v2"
 	buildingM "github.com/windyzoe/study-house/modules/building"
@@ -37,10 +38,10 @@ func getHousePageCount(ch chan int) {
 		if err := json.Unmarshal([]byte(s), &mapResult); err != nil {
 			log.Printf("Error  %v\n", err)
 		}
-		log.Println(`开始发送`)
-		log.Println(mapResult[`totalPage`])
+		log.Info().Msg(`开始发送`)
+		log.Info().Msgf("%s", mapResult[`totalPage`])
 		ch <- mapResult[`totalPage`]
-		log.Println(`发送完毕`)
+		log.Info().Msg(`发送完毕`)
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
@@ -91,10 +92,10 @@ func getBuildingPageCount(ch chan int) {
 		if err := json.Unmarshal([]byte(s), &mapResult); err != nil {
 			log.Printf("Error  %v\n", err)
 		}
-		log.Println(`开始发送`)
-		log.Println(mapResult[`totalPage`])
+		log.Info().Msg(`开始发送`)
+		log.Info().Msgf("%s", mapResult[`totalPage`])
 		ch <- mapResult[`totalPage`]
-		log.Println(`发送完毕`)
+		log.Info().Msg(`发送完毕`)
 	})
 
 	c.OnError(func(r *colly.Response, err error) {

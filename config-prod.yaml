@@ -3,7 +3,7 @@ server:
 
 # sqllite的数据库地址
 db:
-  path: "./foo.db"
+  path: "/store/foo.db"
 
 auth:
-  whitelist: "/login"
+  whitelist: ["/login"]

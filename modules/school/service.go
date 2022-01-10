@@ -1,7 +1,7 @@
 package schoolM
 
 import (
-	"log"
+	"github.com/rs/zerolog/log"
 
 	"github.com/windyzoe/study-house/db"
 	"github.com/windyzoe/study-house/util"
